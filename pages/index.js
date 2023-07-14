@@ -55,23 +55,119 @@ export default function HomePage() {
 
   const getBalance = async() => {
     if (atm) {
-      setBalance((await atm.getBalance()).toNumber());
+      let currBalance = await atm.getBalance();
+      currBalance = ethers.utils.formatEther(currBalance);
+      setBalance(currBalance);
     }
+  }
+
+  const getAmount = () => {
+    let amount = document.getElementById("amount").value;
+    // Check if amount is a positive number and not a string
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount"); 
+      return -1;
+    }
+    return amount;
   }
 
   const deposit = async() => {
     if (atm) {
-      let tx = await atm.deposit(1);
+      let amount = getAmount();
+      // Check if amount is valid
+      if (amount == -1) {
+        return;
+      }
+      try{
+        const parsedAmount = ethers.utils.parseEther(amount.toString());
+        let tx = await atm.deposit({ value: ethers.utils.parseEther(amount.toString()) });
+        await tx.wait()
+        getBalance();
+
+      }
+      catch (err) {
+        alert("Only owner can deposit funds");
+        console.log(err);
+      }
+    }
+  }
+
+  const enoughFunds = (amount) => {
+    if (amount > balance) {
+      alert("You do not have enough funds to withdraw " + amount + " ETH.");
+      return false;
+    }
+    return true;
+  }
+
+  const withdraw = async() => {
+    if (atm) {
+      let amount = getAmount();
+      if (amount == -1) {
+        return;
+      }
+      // Check if user has enough funds to withdraw
+      if (!enoughFunds(amount)) {
+        return;
+      }
+      let tx = await atm.withdraw(ethers.utils.parseEther(amount.toString()));
       await tx.wait()
       getBalance();
     }
   }
 
-  const withdraw = async() => {
+  const transEth = async () => {
+    if (!atm) {
+      return
+    }
+
+    let amount = getAmount();
+    amount = ethers.utils.parseEther(amount.toString());
+    let toAddress = document.getElementById("toAddress").value;
+    if (amount == -1 || !validateAddress(toAddress) || !enoughFunds(amount)) {
+      return;
+    }
+    // Transfer balance to another account
+    
+    let tx = await atm.transfer(toAddress, amount);
+    await tx.wait();
+    getBalance();
+
+  }
+
+  const validateAddress = (address) => {
+    // Check if address is valid and starts with 0x
+    if (address.substring(0,2) != "0x" && address.length != 42) {
+      alert("Please enter a valid address");
+      return false;
+    }
+    return true;
+  }
+
+  const gamEth = async() => {
     if (atm) {
-      let tx = await atm.withdraw(1);
-      await tx.wait()
-      getBalance();
+
+      let guess = document.getElementById("guess").value;
+
+      if (guess != 0 && guess != 1) {
+        alert("Only 1 or 0");
+        return;
+      }
+
+      let results = document.getElementById("results");
+      let randomNumber = Math.floor(Math.random() * 2);
+      if (randomNumber == guess) {
+        let tx = await atm.deposit(1);
+        await tx.wait()
+        getBalance();
+        results.innerHTML = "Winner! You now have " + (balance+1) + " ETH.";
+      }
+      else {
+        let tx = await atm.withdraw(1);
+        await tx.wait()
+        getBalance();
+        results.innerHTML = "Better luck next time! You only have " + (balance-1) + " ETH left.";
+      }
     }
   }
 
@@ -94,8 +190,21 @@ export default function HomePage() {
       <div>
         <p>Your Account: {account}</p>
         <p>Your Balance: {balance}</p>
-        <button onClick={deposit}>Deposit 1 ETH</button>
-        <button onClick={withdraw}>Withdraw 1 ETH</button>
+        <p>Amount</p>
+        <input type="text" id="amount" name="amount"></input>
+        <br></br>
+        <button onClick={deposit}>Mint ETH</button>
+        <button onClick={withdraw}>Burn ETH</button>
+
+        <p>Win or Lose: 0 or 1</p>
+        <input type="text" id="guess" name="guess"></input><br></br>
+        <button onClick={gamEth}>Bet!</button>
+        <p id="results"></p>
+
+        <p>Transfer to address</p> 
+        <input type="text" id="toAddress" name="toAddress"></input><br></br>
+        <button onClick={transEth}>Transfer ETH</button>
+        
       </div>
     )
   }
