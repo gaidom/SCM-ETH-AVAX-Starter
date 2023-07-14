@@ -10,3 +10,11 @@ After cloning the github, you will want to do the following to get the code runn
 
 After this, the project will be running on your localhost. 
 Typically at http://localhost:3000/
+
+#Functions you can explore  
+This project has a simple user interface where users can connect their Metamask wallet. The user can burn, mint, transfer, or bet an eth. 
+
+#Functions you can explore  
+gamEth() - wherein the user can guess from number 0 or 1 and can win or lose an eth. An addition or deduction to the balance will happen. 
+transEth() - wherein the user can transfer to another address. Value transferred will be deducted from the user's balance. 
+
