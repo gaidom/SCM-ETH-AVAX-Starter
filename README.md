@@ -11,7 +11,7 @@ After cloning the github, you will want to do the following to get the code runn
 After this, the project will be running on your localhost. 
 Typically at http://localhost:3000/
 
-# Functions you can explore  
+# Description 
 This project has a simple user interface where users can connect their Metamask wallet. The user can burn, mint, transfer, or bet an eth. 
 
 # Functions you can explore  
